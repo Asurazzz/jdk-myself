@@ -331,11 +331,13 @@ public class ConcurrentLinkedQueue<E> extends AbstractQueue<E>
             Node<E> q = p.next;
             if (q == null) {
                 // p is last node
+                // 对tail的next指针而不是对tail指针执行CAS操作
                 if (p.casNext(null, newNode)) {
                     // Successful CAS is the linearization point
                     // for e to become an element of this queue,
                     // and for newNode to become "live".
                     if (p != t) // hop two nodes at a time
+                        // 每入队两个节点后移一次tail指针
                         casTail(t, newNode);  // Failure is OK.
                     return true;
                 }
@@ -346,9 +348,11 @@ public class ConcurrentLinkedQueue<E> extends AbstractQueue<E>
                 // will also be off-list, in which case we need to
                 // jump to head, from which all live nodes are always
                 // reachable.  Else the new tail is a better bet.
+                // 已经到达队列尾部
                 p = (t != (t = tail)) ? t : head;
             else
                 // Check for tail updates after two hops.
+                // 后移p指针
                 p = (p != t && t != (t = tail)) ? t : q;
         }
     }
@@ -358,11 +362,12 @@ public class ConcurrentLinkedQueue<E> extends AbstractQueue<E>
         for (;;) {
             for (Node<E> h = head, p = h, q;;) {
                 E item = p.item;
-
+                // 出队列的时候，并没有移动head指针，而是把item设置为null
                 if (item != null && p.casItem(item, null)) {
                     // Successful CAS is the linearization point
                     // for item to be removed from this queue.
                     if (p != h) // hop two nodes at a time
+                        // 每产生2个null节点，才把head指针后移两位
                         updateHead(h, ((q = p.next) != null) ? q : p);
                     return item;
                 }
@@ -406,6 +411,7 @@ public class ConcurrentLinkedQueue<E> extends AbstractQueue<E>
     Node<E> first() {
         restartFromHead:
         for (;;) {
+            // 从head指针开始遍历，查找第一个不是null的节点
             for (Node<E> h = head, p = h, q;;) {
                 boolean hasItem = (p.item != null);
                 if (hasItem || (q = p.next) == null) {
@@ -426,6 +432,7 @@ public class ConcurrentLinkedQueue<E> extends AbstractQueue<E>
      * @return {@code true} if this queue contains no elements
      */
     public boolean isEmpty() {
+        // 寻找第一个不是null的节点
         return first() == null;
     }
 

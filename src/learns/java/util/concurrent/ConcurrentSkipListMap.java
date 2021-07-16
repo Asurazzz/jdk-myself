@@ -417,12 +417,12 @@ public class ConcurrentSkipListMap<K,V> extends AbstractMap<K,V>
     static final class Node<K,V> {
         final K key;
         volatile Object value;
-        volatile Node<K,V> next;
+        volatile Node<K, V> next;
 
         /**
          * Creates a new regular node.
          */
-        Node(K key, Object value, Node<K,V> next) {
+        Node(K key, Object value, Node<K, V> next) {
             this.key = key;
             this.value = value;
             this.next = next;
@@ -563,14 +563,14 @@ public class ConcurrentSkipListMap<K,V> extends AbstractMap<K,V>
      * shared abstract class.
      */
     static class Index<K,V> {
-        final Node<K,V> node;
-        final Index<K,V> down;
-        volatile Index<K,V> right;
+        final Node<K, V> node;
+        final Index<K, V> down;
+        volatile Index<K, V> right;
 
         /**
          * Creates index node with given values.
          */
-        Index(Node<K,V> node, Index<K,V> down, Index<K,V> right) {
+        Index(Node<K, V> node, Index<K, V> down, Index<K, V> right) {
             this.node = node;
             this.down = down;
             this.right = right;
@@ -952,6 +952,7 @@ public class ConcurrentSkipListMap<K,V> extends AbstractMap<K,V>
      * associated with key
      * @return the node, or null if not found
      */
+    // 若找到了(key, value)就删除，并返回value；找不到就返回null
     final V doRemove(Object key, Object value) {
         if (key == null)
             throw new NullPointerException();
