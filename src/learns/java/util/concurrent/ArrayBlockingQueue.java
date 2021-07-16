@@ -158,10 +158,13 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
         // assert lock.getHoldCount() == 1;
         // assert items[putIndex] == null;
         final Object[] items = this.items;
+        //通过 putIndex 对数据赋值
         items[putIndex] = x;
+        // 当putIndex 等于数组长度时，将 putIndex 重置为 0
         if (++putIndex == items.length)
             putIndex = 0;
-        count++;
+        count++; //记录队列元素的个数
+        //唤醒处于等待状态下的线程，表示当前队列中的元素不为空,如果存在消费者线程阻塞，就可以开始取出元素
         notEmpty.signal();
     }
 
@@ -174,13 +177,19 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
         // assert items[takeIndex] != null;
         final Object[] items = this.items;
         @SuppressWarnings("unchecked")
+        //默认获取 0 位置的元素
         E x = (E) items[takeIndex];
+        //将该位置的元素设置为空
         items[takeIndex] = null;
+        //这里的作用也是一样，如果拿到数组的最大值，那么重置为 0，继续从头部位置开始获取数据
         if (++takeIndex == items.length)
             takeIndex = 0;
+        //记录 元素个数递减
         count--;
         if (itrs != null)
+            //同时更新迭代器中的元素数据
             itrs.elementDequeued();
+        //触发 因为队列满了以后导致的被阻塞的线程
         notFull.signal();
         return x;
     }
@@ -253,8 +262,11 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
         if (capacity <= 0)
             throw new IllegalArgumentException();
         this.items = new Object[capacity];
+        //重入锁，出队和入队持有这一把锁
         lock = new ReentrantLock(fair);
+        //初始化非空等待队列
         notEmpty = lock.newCondition();
+        //初始化非满等待队列
         notFull =  lock.newCondition();
     }
 
@@ -322,6 +334,7 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
      * @throws NullPointerException if the specified element is null
      */
     public boolean offer(E e) {
+        //对请求数据做判断
         checkNotNull(e);
         final ReentrantLock lock = this.lock;
         lock.lock();
@@ -347,9 +360,15 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
     public void put(E e) throws InterruptedException {
         checkNotNull(e);
         final ReentrantLock lock = this.lock;
+        /**
+         * 这个也是获得锁，但是和 lock 的区别是，这个方法优先允许在等待时由其他线程调
+         *  用等待线程的 interrupt 方法来中断等待直接返回。而 lock
+         *  方法是尝试获得锁成功后才响应中断
+         */
         lock.lockInterruptibly();
         try {
             while (count == items.length)
+                //队列满了的情况下，当前线程将会被 notFull 条件对象挂起加到等待队列中
                 notFull.await();
             enqueue(e);
         } finally {
@@ -400,6 +419,7 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
         lock.lockInterruptibly();
         try {
             while (count == 0)
+                //如果队列为空的情况下，直接通过 await 方法阻塞
                 notEmpty.await();
             return dequeue();
         } finally {
@@ -492,21 +512,31 @@ public class ArrayBlockingQueue<E> extends AbstractQueue<E>
      */
     public boolean remove(Object o) {
         if (o == null) return false;
+        //获取数组元素
         final Object[] items = this.items;
         final ReentrantLock lock = this.lock;
+        //获得锁
         lock.lock();
         try {
+            //如果队列不为空
             if (count > 0) {
+                //获取下一个要添加元素时的索引
                 final int putIndex = this.putIndex;
+                //获取当前要被移除的元素的索引
                 int i = takeIndex;
                 do {
+                    //从takeIndex 下标开始，找到要被删除的元素
                     if (o.equals(items[i])) {
+                        //移除指定元素
                         removeAt(i);
+                        //返回执行结果
                         return true;
                     }
+                    //当前删除索引执行加 1 后判断是否与数组长度相等
+                    //若为 true，说明索引已到数组尽头，将 i 设置为 0
                     if (++i == items.length)
                         i = 0;
-                } while (i != putIndex);
+                } while (i != putIndex); //继续查找，直到找到最后一个元素
             }
             return false;
         } finally {
