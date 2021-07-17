@@ -295,6 +295,7 @@ public class ThreadLocal<T> {
          * @param firstValue
          */
         ThreadLocalMap(ThreadLocal<?> firstKey, Object firstValue) {
+            // 初始化大小是16
             table = new Entry[INITIAL_CAPACITY];
             // i 是一个 [0, INITIAL_CAPACITY) 之间的值
             int i = firstKey.threadLocalHashCode & (INITIAL_CAPACITY - 1);
