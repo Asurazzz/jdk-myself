@@ -75,7 +75,7 @@ public class ArrayList<E> extends AbstractList<E>
      * @throws IllegalArgumentException 如果指定容量为负
      */
     public ArrayList(int initialCapacity) {
-        // 如果初始化时ArrayList大小大于0
+        // 如果初始化时ArrayList大小大于0,创建Object数组
         if (initialCapacity > 0) {
             // new一个该大小的object数组赋给elementData
             this.elementData = new Object[initialCapacity];
@@ -990,6 +990,7 @@ public class ArrayList<E> extends AbstractList<E>
         }
 
         public E remove(int index) {
+            // 校验 index 不要超过 size
             rangeCheck(index);
             checkForComodification();
             E result = parent.remove(parentOffset + index);

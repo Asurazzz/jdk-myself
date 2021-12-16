@@ -44,11 +44,8 @@ import java.util.concurrent.ConcurrentMap;
 import static java.io.ObjectStreamClass.processQueue;
 
 import sun.misc.SharedSecrets;
-import sun.misc.ObjectInputFilter;
-import sun.misc.ObjectStreamClassValidator;
 import sun.misc.SharedSecrets;
 import sun.reflect.misc.ReflectUtil;
-import sun.misc.JavaOISAccess;
 import sun.util.logging.PlatformLogger;
 
 /**
@@ -245,26 +242,26 @@ public class ObjectInputStream
             new ReferenceQueue<>();
     }
 
-    static {
-        /* Setup access so sun.misc can invoke package private functions. */
-        JavaOISAccess javaOISAccess = new JavaOISAccess() {
-            public void setObjectInputFilter(ObjectInputStream stream, ObjectInputFilter filter) {
-                stream.setInternalObjectInputFilter(filter);
-            }
-
-            public ObjectInputFilter getObjectInputFilter(ObjectInputStream stream) {
-                return stream.getInternalObjectInputFilter();
-            }
-
-            public void checkArray(ObjectInputStream stream, Class<?> arrayType, int arrayLength)
-                throws InvalidClassException
-            {
-                stream.checkArray(arrayType, arrayLength);
-            }
-        };
-
-        sun.misc.SharedSecrets.setJavaOISAccess(javaOISAccess);
-    }
+//    static {
+//        /* Setup access so sun.misc can invoke package private functions. */
+//        JavaOISAccess javaOISAccess = new JavaOISAccess() {
+//            public void setObjectInputFilter(ObjectInputStream stream, ObjectInputFilter filter) {
+//                stream.setInternalObjectInputFilter(filter);
+//            }
+//
+//            public ObjectInputFilter getObjectInputFilter(ObjectInputStream stream) {
+//                return stream.getInternalObjectInputFilter();
+//            }
+//
+//            public void checkArray(ObjectInputStream stream, Class<?> arrayType, int arrayLength)
+//                throws InvalidClassException
+//            {
+//                stream.checkArray(arrayType, arrayLength);
+//            }
+//        };
+//
+//        sun.misc.SharedSecrets.setJavaOISAccess(javaOISAccess);
+//    }
 
     /*
      * Separate class to defer initialization of logging until needed.
@@ -349,11 +346,11 @@ public class ObjectInputStream
      * @see     ObjectOutputStream#ObjectOutputStream(OutputStream)
      */
     public ObjectInputStream(InputStream in) throws IOException {
-        verifySubclass();
+        //verifySubclass();
         bin = new BlockDataInputStream(in);
         handles = new HandleTable(10);
         vlist = new ValidationList();
-        serialFilter = ObjectInputFilter.Config.getSerialFilter();
+        //serialFilter = ObjectInputFilter.Config.getSerialFilter();
         enableOverride = false;
         readStreamHeader();
         bin.setBlockDataMode(true);
@@ -384,7 +381,7 @@ public class ObjectInputStream
         bin = null;
         handles = null;
         vlist = null;
-        serialFilter = ObjectInputFilter.Config.getSerialFilter();
+       // serialFilter = ObjectInputFilter.Config.getSerialFilter();
         enableOverride = true;
     }
 
@@ -1142,7 +1139,7 @@ public class ObjectInputStream
      *
      * @return the serialization filter for the stream; may be null
      */
-    private final ObjectInputFilter getInternalObjectInputFilter() {
+   // private final ObjectInputFilter getInternalObjectInputFilter() {
         return serialFilter;
     }
 
@@ -1206,18 +1203,18 @@ public class ObjectInputStream
      * @throws IllegalStateException if the {@linkplain #getInternalObjectInputFilter() current filter}
      *       is not {@code null} and is not the process-wide filter
      */
-    private final void setInternalObjectInputFilter(ObjectInputFilter filter) {
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sm.checkPermission(new SerializablePermission("serialFilter"));
-        }
-        // Allow replacement of the process-wide filter if not already set
-        if (serialFilter != null &&
-                serialFilter != ObjectInputFilter.Config.getSerialFilter()) {
-            throw new IllegalStateException("filter can not be set more than once");
-        }
-        this.serialFilter = filter;
-    }
+//    private final void setInternalObjectInputFilter(ObjectInputFilter filter) {
+//        SecurityManager sm = System.getSecurityManager();
+//        if (sm != null) {
+//            sm.checkPermission(new SerializablePermission("serialFilter"));
+//        }
+//        // Allow replacement of the process-wide filter if not already set
+//        if (serialFilter != null &&
+//                serialFilter != ObjectInputFilter.Config.getSerialFilter()) {
+//            throw new IllegalStateException("filter can not be set more than once");
+//        }
+//        this.serialFilter = filter;
+//    }
 
     /**
      * Invoke the serialization filter if non-null.
@@ -1232,38 +1229,38 @@ public class ObjectInputStream
             throws InvalidClassException {
         if (serialFilter != null) {
             RuntimeException ex = null;
-            ObjectInputFilter.Status status;
+            //ObjectInputFilter.Status status;
             // Info about the stream is not available if overridden by subclass, return 0
             long bytesRead = (bin == null) ? 0 : bin.getBytesRead();
             try {
-                status = serialFilter.checkInput(new FilterValues(clazz, arrayLength,
+               // status = serialFilter.checkInput(new FilterValues(clazz, arrayLength,
                         totalObjectRefs, depth, bytesRead));
             } catch (RuntimeException e) {
                 // Preventive interception of an exception to log
-                status = ObjectInputFilter.Status.REJECTED;
+               // status = ObjectInputFilter.Status.REJECTED;
                 ex = e;
             }
-            if (status == null  ||
-                    status == ObjectInputFilter.Status.REJECTED) {
-                // Debug logging of filter checks that fail
-                if (Logging.infoLogger != null) {
-                    Logging.infoLogger.info(
-                            "ObjectInputFilter {0}: {1}, array length: {2}, nRefs: {3}, depth: {4}, bytes: {5}, ex: {6}",
-                            status, clazz, arrayLength, totalObjectRefs, depth, bytesRead,
-                            Objects.toString(ex, "n/a"));
-                }
-                InvalidClassException ice = new InvalidClassException("filter status: " + status);
-                ice.initCause(ex);
-                throw ice;
-            } else {
-                // Trace logging for those that succeed
-                if (Logging.traceLogger != null) {
-                    Logging.traceLogger.finer(
-                            "ObjectInputFilter {0}: {1}, array length: {2}, nRefs: {3}, depth: {4}, bytes: {5}, ex: {6}",
-                            status, clazz, arrayLength, totalObjectRefs, depth, bytesRead,
-                            Objects.toString(ex, "n/a"));
-                }
-            }
+//            if (status == null  ||
+//                    status == ObjectInputFilter.Status.REJECTED) {
+//                // Debug logging of filter checks that fail
+//                if (Logging.infoLogger != null) {
+//                    Logging.infoLogger.info(
+//                            "ObjectInputFilter {0}: {1}, array length: {2}, nRefs: {3}, depth: {4}, bytes: {5}, ex: {6}",
+//                            status, clazz, arrayLength, totalObjectRefs, depth, bytesRead,
+//                            Objects.toString(ex, "n/a"));
+//                }
+//                InvalidClassException ice = new InvalidClassException("filter status: " + status);
+//                ice.initCause(ex);
+//                throw ice;
+//            } else {
+//                // Trace logging for those that succeed
+//                if (Logging.traceLogger != null) {
+//                    Logging.traceLogger.finer(
+//                            "ObjectInputFilter {0}: {1}, array length: {2}, nRefs: {3}, depth: {4}, bytes: {5}, ex: {6}",
+//                            status, clazz, arrayLength, totalObjectRefs, depth, bytesRead,
+//                            Objects.toString(ex, "n/a"));
+//                }
+//            }
         }
     }
 
@@ -1658,7 +1655,7 @@ public class ObjectInputStream
                         String.format("invalid type code: %02X", tc));
             }
         } finally {
-            passHandle = oldHandle;
+            //passHandle = oldHandle;
         }
     }
 
@@ -2569,47 +2566,47 @@ public class ObjectInputStream
     /**
      * Hold a snapshot of values to be passed to an ObjectInputFilter.
      */
-    static class FilterValues implements ObjectInputFilter.FilterInfo {
-        final Class<?> clazz;
-        final long arrayLength;
-        final long totalObjectRefs;
-        final long depth;
-        final long streamBytes;
-
-        public FilterValues(Class<?> clazz, long arrayLength, long totalObjectRefs,
-                            long depth, long streamBytes) {
-            this.clazz = clazz;
-            this.arrayLength = arrayLength;
-            this.totalObjectRefs = totalObjectRefs;
-            this.depth = depth;
-            this.streamBytes = streamBytes;
-        }
-
-        @Override
-        public Class<?> serialClass() {
-            return clazz;
-        }
-
-        @Override
-        public long arrayLength() {
-            return arrayLength;
-        }
-
-        @Override
-        public long references() {
-            return totalObjectRefs;
-        }
-
-        @Override
-        public long depth() {
-            return depth;
-        }
-
-        @Override
-        public long streamBytes() {
-            return streamBytes;
-        }
-    }
+//    static class FilterValues implements ObjectInputFilter.FilterInfo {
+//        final Class<?> clazz;
+//        final long arrayLength;
+//        final long totalObjectRefs;
+//        final long depth;
+//        final long streamBytes;
+//
+//        public FilterValues(Class<?> clazz, long arrayLength, long totalObjectRefs,
+//                            long depth, long streamBytes) {
+//            this.clazz = clazz;
+//            this.arrayLength = arrayLength;
+//            this.totalObjectRefs = totalObjectRefs;
+//            this.depth = depth;
+//            this.streamBytes = streamBytes;
+//        }
+//
+//        @Override
+//        public Class<?> serialClass() {
+//            return clazz;
+//        }
+//
+//        @Override
+//        public long arrayLength() {
+//            return arrayLength;
+//        }
+//
+//        @Override
+//        public long references() {
+//            return totalObjectRefs;
+//        }
+//
+//        @Override
+//        public long depth() {
+//            return depth;
+//        }
+//
+//        @Override
+//        public long streamBytes() {
+//            return streamBytes;
+//        }
+//    }
 
     /**
      * Input stream supporting single-byte peek operations.
@@ -3911,12 +3908,12 @@ public class ObjectInputStream
     }
 
     // controlled access to ObjectStreamClassValidator
-    private volatile ObjectStreamClassValidator validator;
-
-    private static void setValidator(ObjectInputStream ois, ObjectStreamClassValidator validator) {
-        ois.validator = validator;
-    }
-    static {
-        SharedSecrets.setJavaObjectInputStreamAccess(ObjectInputStream::setValidator);
-    }
+//    private volatile ObjectStreamClassValidator validator;
+//
+//    private static void setValidator(ObjectInputStream ois, ObjectStreamClassValidator validator) {
+//        ois.validator = validator;
+//    }
+//    static {
+//        SharedSecrets.setJavaObjectInputStreamAccess(ObjectInputStream::setValidator);
+//    }
 }
