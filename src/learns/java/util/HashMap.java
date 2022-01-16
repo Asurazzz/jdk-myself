@@ -2229,7 +2229,9 @@ public class HashMap<K, V> extends AbstractMap<K, V>
                 if ((xp = x.parent) == null) {
                     x.red = false;
                     return x;
-                } else if (!xp.red || (xpp = xp.parent) == null)
+                }
+                // 父节点是黑色的直接返回root，代表只有两层节点
+                else if (!xp.red || (xpp = xp.parent) == null)
                     return root;
                 if (xp == (xppl = xpp.left)) {
                     if ((xppr = xpp.right) != null && xppr.red) {

@@ -1773,6 +1773,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
                         sc = n - (n >>> 2);
                     }
                 } finally {
+
                     //设置 sizeCtl 为 sc, 如果默认是 16 的话，那么这个时候sc=16*0.75=12
                     sizeCtl = sc;
                 }
